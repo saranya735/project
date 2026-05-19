@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  xray-app:
+    build: .
+    container_name: xray-flask-app
+    ports:
+      - "5050:5050"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+    restart: always
