@@ -1,13 +1,13 @@
 {
   "functions": {
-    "api/**/*.py": {
-      "includeFiles": "{templates/**,static/**}"
+    "index.py": {
+      "includeFiles": "*.html"
     }
   },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/index"
+      "destination": "/index.py"
     }
   ]
 }
