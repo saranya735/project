@@ -1,7 +1,7 @@
 import os
 import sys
 import hashlib
-import uuid
+import base64
 from flask import Flask, render_template, request, redirect, url_for
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -42,20 +42,18 @@ def predict():
         return redirect(url_for("index"))
     filename = file.filename.lower()
     
-    # Save the uploaded file to display it on the result page
-    safe_filename = f"{uuid.uuid4().hex}_{filename}"
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
-    file.save(filepath)
-    image_url = url_for('static', filename=f'uploads/{safe_filename}')
+    # Read file and encode to base64 to avoid writing to read-only filesystem (Vercel)
+    file.seek(0)
+    file_bytes = file.read()
+    encoded = base64.b64encode(file_bytes).decode('utf-8')
+    image_url = f"data:image/png;base64,{encoded}"
     
     if filename.startswith("affected"):
         return render_template("result.html", result="affected", confidence="98.15", image_url=image_url)
     elif filename.startswith("normal"):
         return render_template("result.html", result="normal", confidence="99.42", image_url=image_url)
     
-    # Open the saved file to calculate hash
-    with open(filepath, 'rb') as f:
-        file_hash = md5_of_file(f)
+    file_hash = hashlib.md5(file_bytes).hexdigest()
         
     if file_hash == AFFECTED_HASH:
         return render_template("result.html", result="affected", image_url=image_url)
