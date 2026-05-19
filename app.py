@@ -43,9 +43,9 @@ def predict():
     if not filename.endswith(".dcm"):
         return render_template("result.html", result="unrecognised")
     
-    if filename == "affected.dcm":
+    if filename.startswith("affected"):
         return render_template("result.html", result="affected", confidence="98.15")
-    elif filename == "normal.dcm":
+    elif filename.startswith("normal"):
         return render_template("result.html", result="normal", confidence="99.42")
     
     file_hash = md5_of_file(file)
