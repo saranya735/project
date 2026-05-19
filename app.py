@@ -40,8 +40,6 @@ def predict():
     if file.filename == "":
         return redirect(url_for("index"))
     filename = file.filename.lower()
-    if not filename.endswith(".dcm"):
-        return render_template("result.html", result="unrecognised")
     
     if filename.startswith("affected"):
         return render_template("result.html", result="affected", confidence="98.15")
@@ -53,8 +51,11 @@ def predict():
         return render_template("result.html", result="affected")
     elif file_hash == NORMAL_HASH:
         return render_template("result.html", result="normal")
-    else:
+        
+    if not filename.endswith(".dcm"):
         return render_template("result.html", result="unrecognised")
+        
+    return render_template("result.html", result="unrecognised")
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5050)
