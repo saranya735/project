@@ -1,6 +1,7 @@
 import os
 import sys
 import hashlib
+import uuid
 from flask import Flask, render_template, request, redirect, url_for
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,21 +42,30 @@ def predict():
         return redirect(url_for("index"))
     filename = file.filename.lower()
     
-    if filename.startswith("affected"):
-        return render_template("result.html", result="affected", confidence="98.15")
-    elif filename.startswith("normal"):
-        return render_template("result.html", result="normal", confidence="99.42")
+    # Save the uploaded file to display it on the result page
+    safe_filename = f"{uuid.uuid4().hex}_{filename}"
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
+    file.save(filepath)
+    image_url = url_for('static', filename=f'uploads/{safe_filename}')
     
-    file_hash = md5_of_file(file)
+    if filename.startswith("affected"):
+        return render_template("result.html", result="affected", confidence="98.15", image_url=image_url)
+    elif filename.startswith("normal"):
+        return render_template("result.html", result="normal", confidence="99.42", image_url=image_url)
+    
+    # Open the saved file to calculate hash
+    with open(filepath, 'rb') as f:
+        file_hash = md5_of_file(f)
+        
     if file_hash == AFFECTED_HASH:
-        return render_template("result.html", result="affected")
+        return render_template("result.html", result="affected", image_url=image_url)
     elif file_hash == NORMAL_HASH:
-        return render_template("result.html", result="normal")
+        return render_template("result.html", result="normal", image_url=image_url)
         
     if not filename.endswith(".dcm"):
-        return render_template("result.html", result="unrecognised")
+        return render_template("result.html", result="unrecognised", image_url=image_url)
         
-    return render_template("result.html", result="unrecognised")
+    return render_template("result.html", result="unrecognised", image_url=image_url)
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5050)

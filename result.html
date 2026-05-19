@@ -274,6 +274,26 @@
         transform: scale(1) translateY(0);
       }
     }
+
+    .image-preview {
+      margin: 0 auto 36px;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .image-preview img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 6px;
+      filter: contrast(1.1) grayscale(0.1);
+    }
   </style>
 </head>
 
@@ -298,6 +318,12 @@
         Abnormal opacity patterns detected in lung regions.<br />
         Please consult a qualified medical professional immediately.
       </p>
+
+      {% if image_url %}
+      <div class="image-preview">
+        <img src="{{ image_url }}" alt="Uploaded Chest X-Ray">
+      </div>
+      {% endif %}
       <div class="metrics">
         <div class="metric">
           <div class="v">{{ confidence or '96.29' }}%</div>
@@ -329,6 +355,12 @@
         Lung regions appear clear with no signs of infection,<br />
         opacity, or consolidation. Great news!
       </p>
+
+      {% if image_url %}
+      <div class="image-preview">
+        <img src="{{ image_url }}" alt="Uploaded Chest X-Ray">
+      </div>
+      {% endif %}
       <div class="metrics">
         <div class="metric">
           <div class="v">{{ confidence or '96.29' }}%</div>
@@ -361,6 +393,12 @@
         <strong style="color:var(--accent)">.DCM (DICOM) format</strong> only.<br /><br />
         Ensure the file is an original X-ray DICOM image.
       </p>
+
+      {% if image_url %}
+      <div class="image-preview">
+        <img src="{{ image_url }}" alt="Uploaded File">
+      </div>
+      {% endif %}
 
       {% endif %}
 
