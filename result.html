@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {% if result == "affected" %}
+  <title>PneumoScan — Pneumonia Detected</title>
+  {% elif result == "normal" %}
+  <title>PneumoScan — Lungs Normal</title>
+  {% else %}
+  <title>PneumoScan — File Unrecognised</title>
+  {% endif %}
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #060c14;
+      --surface: #0d1a2a;
+      --border: #1a3050;
+      --text: #e0f0ff;
+      --muted: #5a7a99;
+      --card: #0a1622;
+
+      {% if result == "affected" %}
+      --accent: #ff4f6a;
+      --accent-glow: rgba(255, 79, 106, 0.25);
+      --accent-soft: rgba(255, 79, 106, 0.08);
+      {% elif result == "normal" %}
+      --accent: #00e5a0;
+      --accent-glow: rgba(0, 229, 160, 0.25);
+      --accent-soft: rgba(0, 229, 160, 0.08);
+      {% else %}
+      --accent: #f5a623;
+      --accent-glow: rgba(245, 166, 35, 0.25);
+      --accent-soft: rgba(245, 166, 35, 0.08);
+      {% endif %}
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.35;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% 50%, var(--accent-glow) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 0.6;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .result-card {
+      width: 100%;
+      max-width: 540px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 52px 44px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 0 80px var(--accent-glow), 0 20px 60px rgba(0, 0, 0, 0.6);
+      animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    /* icon ring */
+    .icon-ring {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 32px;
+      position: relative;
+      animation: ringPulse 2s ease infinite;
+    }
+
+    @keyframes ringPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 var(--accent-glow);
+      }
+
+      50% {
+        box-shadow: 0 0 0 16px transparent;
+      }
+    }
+
+    .icon-ring svg {
+      width: 44px;
+      height: 44px;
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .status-tag {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      padding: 4px 12px;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    h2 .highlight {
+      color: var(--accent);
+    }
+
+    .desc {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 36px;
+    }
+
+    /* metrics strip — only for detected/normal */
+    .metrics {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+
+    .metric {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 8px;
+    }
+
+    .metric .v {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .metric .l {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 32px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      color: var(--accent);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+    }
+
+    .btn-home:hover {
+      background: var(--accent-soft);
+      box-shadow: 0 0 24px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    .btn-home svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .timestamp {
+      margin-top: 28px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: #2a4a68;
+      letter-spacing: 1px;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.85) translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="result-card">
+
+      {% if result == "affected" %}
+      <!-- AFFECTED -->
+      <div class="icon-ring">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+      <div class="status-tag">⚠ Analysis Complete</div>
+      <h2>Pneumonia<br /><span class="highlight">Detected</span></h2>
+      <p class="desc">
+        The uploaded chest X-ray has been classified as<br />
+        <strong style="color:var(--accent)">PNEUMONIA POSITIVE</strong>.<br /><br />
+        Abnormal opacity patterns detected in lung regions.<br />
+        Please consult a qualified medical professional immediately.
+      </p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="v">{{ confidence or '96.29' }}%</div>
+          <div class="l">Confidence</div>
+        </div>
+        <div class="metric">
+          <div class="v">ViT</div>
+          <div class="l">Model Used</div>
+        </div>
+        <div class="metric">
+          <div class="v">POSITIVE</div>
+          <div class="l">Result</div>
+        </div>
+      </div>
+
+      {% elif result == "normal" %}
+      <!-- NORMAL -->
+      <div class="icon-ring">
+        <svg viewBox="0 0 24 24">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+      </div>
+      <div class="status-tag">✓ Analysis Complete</div>
+      <h2>Lungs Are<br /><span class="highlight">Healthy</span></h2>
+      <p class="desc">
+        The uploaded chest X-ray has been classified as<br />
+        <strong style="color:var(--accent)">NORMAL — NO PNEUMONIA DETECTED</strong>.<br /><br />
+        Lung regions appear clear with no signs of infection,<br />
+        opacity, or consolidation. Great news!
+      </p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="v">{{ confidence or '96.29' }}%</div>
+          <div class="l">Confidence</div>
+        </div>
+        <div class="metric">
+          <div class="v">ViT</div>
+          <div class="l">Model Used</div>
+        </div>
+        <div class="metric">
+          <div class="v">NEGATIVE</div>
+          <div class="l">Result</div>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- UNRECOGNISED -->
+      <div class="icon-ring">
+        <svg viewBox="0 0 24 24">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      </div>
+      <div class="status-tag">⊘ File Not Recognised</div>
+      <h2>Invalid<br /><span class="highlight">File</span></h2>
+      <p class="desc">
+        The uploaded file could not be recognised.<br /><br />
+        Please upload a valid chest X-ray in<br />
+        <strong style="color:var(--accent)">.DCM (DICOM) format</strong> only.<br /><br />
+        Ensure the file is an original X-ray DICOM image.
+      </p>
+
+      {% endif %}
+
+      <a href="/" class="btn-home">
+        <svg viewBox="0 0 24 24">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back to Home
+      </a>
+
+      <div class="timestamp" id="ts"></div>
+    </div>
+  </div>
+
+  <script>
+    const d = new Date();
+    document.getElementById('ts').textContent =
+      '// Analysed at ' + d.toLocaleDateString('en-IN') + ' · ' + d.toLocaleTimeString('en-IN');
+  </script>
+</body>
+
+</html>

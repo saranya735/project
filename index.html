@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PneumoScan — X-Ray Analyser</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #060c14;
+      --surface: #0d1a2a;
+      --border: #1a3050;
+      --accent: #00e5ff;
+      --accent2: #ff4f6a;
+      --text: #e0f0ff;
+      --muted: #5a7a99;
+      --card: #0a1622;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* animated grid bg */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.35;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0, 229, 255, 0.08) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    /* header */
+    .header {
+      text-align: center;
+      margin-bottom: 52px;
+      animation: fadeDown 0.7s ease both;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      padding: 4px 12px;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      margin-top: 14px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+    }
+
+    /* upload card */
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+      position: relative;
+      animation: fadeUp 0.7s ease 0.15s both;
+      box-shadow: 0 0 60px rgba(0, 229, 255, 0.04), 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      margin-bottom: 28px;
+    }
+
+    .drop-zone.dragover,
+    .drop-zone:hover {
+      border-color: var(--accent);
+      background: rgba(0, 229, 255, 0.04);
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s;
+    }
+
+    .drop-zone:hover .drop-icon {
+      border-color: var(--accent);
+    }
+
+    .drop-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--accent);
+    }
+
+    .drop-label {
+      font-size: 14px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+
+    .drop-label span {
+      display: block;
+      font-size: 12px;
+      margin-top: 6px;
+      color: #3a5a78;
+    }
+
+    .file-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+      margin-top: 10px;
+      min-height: 18px;
+      text-align: center;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(0, 229, 255, 0.4);
+    }
+
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+
+    .btn-submit::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+    }
+
+    .info-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .info-item {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .info-item .val {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+
+    .info-item .lbl {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* scanning animation on submit */
+    .scanning {
+      display: none;
+    }
+
+    .loading .scanning {
+      display: block;
+    }
+
+    .loading span:first-child {
+      display: none;
+    }
+
+    @keyframes fadeDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* scan line */
+    .scan-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: scanDown 1.2s linear infinite;
+      display: none;
+    }
+
+    .drop-zone.active .scan-bar {
+      display: block;
+    }
+
+    @keyframes scanDown {
+      0% {
+        top: 0;
+      }
+
+      100% {
+        top: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="header">
+      <div class="badge">MCA Project Demo — Arunachala College</div>
+      <h1>PneumoScan<br />X-Ray Analyser</h1>
+      <p class="subtitle">// Automated Pneumonia Detection · Transformer Architecture</p>
+    </div>
+
+    <div class="card">
+      <form action="/predict" method="POST" enctype="multipart/form-data" id="uploadForm">
+        <div class="drop-zone" id="dropZone">
+          <div class="scan-bar"></div>
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+          <div class="drop-label">
+            Drop your DICOM file here or click to browse
+            <span>Accepts .dcm format only</span>
+          </div>
+          <input type="file" name="xray" id="fileInput" accept=".dcm" required />
+        </div>
+        <div class="file-name" id="fileName">No file selected</div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <span>Analyse X-Ray</span>
+          <span class="scanning">Scanning…</span>
+        </button>
+      </form>
+
+      <div class="info-row">
+        <div class="info-item">
+          <div class="val">96.29%</div>
+          <div class="lbl">Model Accuracy</div>
+        </div>
+        <div class="info-item">
+          <div class="val">ViT</div>
+          <div class="lbl">Architecture</div>
+        </div>
+        <div class="info-item">
+          <div class="val">5,856</div>
+          <div class="lbl">Training Images</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('fileInput');
+    const label = document.getElementById('fileName');
+    const dropZone = document.getElementById('dropZone');
+    const form = document.getElementById('uploadForm');
+    const btn = document.getElementById('submitBtn');
+
+    input.addEventListener('change', () => {
+      if (input.files[0]) {
+        label.textContent = '📄 ' + input.files[0].name;
+        dropZone.classList.add('active');
+      }
+    });
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) {
+        input.files = e.dataTransfer.files;
+        label.textContent = '📄 ' + e.dataTransfer.files[0].name;
+        dropZone.classList.add('active');
+      }
+    });
+
+    form.addEventListener('submit', (e) => {
+      if (btn.classList.contains('loading')) return;
+
+      e.preventDefault();
+      btn.classList.add('loading');
+      dropZone.classList.add('active'); // Ensure scan bar is visible
+
+      // Artificial delay to show the scanning animation (premium feel)
+      setTimeout(() => {
+        form.submit();
+      }, 1500);
+    });
+  </script>
+</body>
+
+</html>
